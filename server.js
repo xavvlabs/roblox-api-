@@ -1,20 +1,39 @@
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type"
+};
+
 export default {
   async fetch(request) {
     const url = new URL(request.url);
 
+    // CORS preflight
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders
+      });
+    }
+
     // Halaman utama
     if (url.pathname === "/") {
-      return Response.json({
-        success: true,
-        message: "Roblox API aktif"
-      });
+      return Response.json(
+        {
+          success: true,
+          message: "Roblox API aktif"
+        },
+        {
+          headers: corsHeaders
+        }
+      );
     }
 
     // API Roblox
     if (url.pathname.startsWith("/api/roblox/")) {
       const username = decodeURIComponent(
         url.pathname.replace("/api/roblox/", "")
-      );
+      ).trim();
 
       if (!username) {
         return Response.json(
@@ -22,7 +41,10 @@ export default {
             success: false,
             message: "Username Roblox kosong"
           },
-          { status: 400 }
+          {
+            status: 400,
+            headers: corsHeaders
+          }
         );
       }
 
@@ -44,13 +66,19 @@ export default {
 
         const userData = await userResponse.json();
 
-        if (!userData.data || userData.data.length === 0) {
+        if (
+          !userData.data ||
+          userData.data.length === 0
+        ) {
           return Response.json(
             {
               success: false,
               message: "Username Roblox tidak ditemukan"
             },
-            { status: 404 }
+            {
+              status: 404,
+              headers: corsHeaders
+            }
           );
         }
 
@@ -66,13 +94,18 @@ export default {
         const avatar =
           avatarData.data?.[0]?.imageUrl || null;
 
-        return Response.json({
-          success: true,
-          userId: user.id,
-          username: user.name,
-          displayName: user.displayName,
-          avatar: avatar
-        });
+        return Response.json(
+          {
+            success: true,
+            userId: user.id,
+            username: user.name,
+            displayName: user.displayName,
+            avatar: avatar
+          },
+          {
+            headers: corsHeaders
+          }
+        );
 
       } catch (error) {
         return Response.json(
@@ -80,7 +113,10 @@ export default {
             success: false,
             message: "Gagal menghubungkan ke Roblox"
           },
-          { status: 500 }
+          {
+            status: 500,
+            headers: corsHeaders
+          }
         );
       }
     }
@@ -90,7 +126,10 @@ export default {
         success: false,
         message: "Endpoint tidak ditemukan"
       },
-      { status: 404 }
+      {
+        status: 404,
+        headers: corsHeaders
+      }
     );
   }
 };
